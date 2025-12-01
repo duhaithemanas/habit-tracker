@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="description" content="تطبيق تتبع العادات اليومية مع دعم PWA">
+    <title>تتبع العادات</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%233b82f6' width='192' height='192'/><text x='50%' y='50%' font-size='120' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>✓</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%233b82f6' width='192' height='192'/><text x='50%' y='50%' font-size='120' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>✓</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1e40af;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --light-bg: #f9fafb;
+            --light-border: #e5e7eb;
+            --light-text: #1f2937;
+            --light-text-secondary: #6b7280;
+            --dark-bg: #111827;
+            --dark-card: #1f2937;
+            --dark-border: #374151;
+            --dark-text: #f3f4f6;
+            --dark-text-secondary: #9ca3af;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--light-text);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body.dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        /* Container & Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            border-bottom: 1px solid var(--light-border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body.dark-mode header {
+            background: var(--dark-card);
+            border-bottom-color: var(--dark-border);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--light-border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.5rem;
+        }
+
+        body.dark-mode .nav-tabs {
+            border-bottom-color: var(--dark-border);
+        }
+
+        .nav-tab {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--light-text-secondary);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -0.5rem;
+        }
+
+        body.dark-mode .nav-tab {
+            color: var(--dark-text-secondary);
+        }
+
+        .nav-tab:hover {
+            color: var(--primary);
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Buttons */
+        button {
+            font-family: inherit;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.25rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-small {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--light-border);
+            color: var(--light-text);
+        }
+
+        body.dark-mode .btn-icon {
+            background: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        .btn-icon:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Main Content */
+        main {
+            padding: 1.5rem 0;
+            min-height: calc(100vh - 80px);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid var(--light-border);
+        }
+
+        body.dark-mode .card {
+            background: var(--dark-card);
+            border-color: var(--dark-border);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        body.dark-mode .card-header {
+            border-bottom-color: var(--dark-border);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--light-text);
+        }
+
+        body.dark-mode .card-title {
+            color: var(--dark-text);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--light-text);
+        }
+
+        body.dark-mode label {
+            color: var(--dark-text);
+        }
+
+        input[type="text"],
+        input[type="color"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--light-border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 0.95rem;
+            background: white;
+            color: var(--light-text);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode input[type="text"],
+        body.dark-mode input[type="color"],
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background: var(--dark-bg);
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        input[type="text"]:focus,
+        input[type="color"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        body.dark-mode .modal-content {
+            background: var(--dark-card);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        body.dark-mode .modal-header {
+            border-bottom-color: var(--dark-border);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--light-border);
+        }
+
+        body.dark-mode .modal-footer {
+            border-top-color: var(--dark-border);
+        }
+
+        /* Departments Section */
+        .departments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .departments-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .department-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            border: 2px solid var(--light-border);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.dark-mode .department-card {
+            background: var(--dark-card);
+            border-color: var(--dark-border);
+        }
+
+        .department-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+        }
+
+        .department-card.active {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .department-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--light-text);
+        }
+
+        body.dark-mode .department-name {
+            color: var(--dark-text);
+        }
+
+        .department-count {
+            font-size: 0.85rem;
+            color: var(--light-text-secondary);
+        }
+
+        body.dark-mode .department-count {
+            color: var(--dark-text-secondary);
+        }
+
+        .department-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        /* Habits Section */
+        .habits-container {
+            display: grid;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .habits-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .habits-container {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+
+        .habit-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .habit-card {
+            background: var(--dark-card);
+        }
+
+        .habit-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .habit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .habit-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--light-text);
+        }
+
+        body.dark-mode .habit-title {
+            color: var(--dark-text);
+        }
+
+        .habit-department {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            background: var(--light-border);
+            color: var(--light-text-secondary);
+            border-radius: 20px;
+            margin-bottom: 0.5rem;
+        }
+
+        body.dark-mode .habit-department {
+            background: var(--dark-border);
+            color: var(--dark-text-secondary);
+        }
+
+        .habit-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Weekly Tracker */
+        .weekly-tracker {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .day-column {
+            text-align: center;
+        }
+
+        .day-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--light-text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        body.dark-mode .day-label {
+            color: var(--dark-text-secondary);
+        }
+
+        .day-checkbox {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px solid var(--light-border);
+            border-radius: var(--radius);
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        body.dark-mode .day-checkbox {
+            background: var(--dark-bg);
+            border-color: var(--dark-border);
+        }
+
+        .day-checkbox:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .day-checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--light-border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        body.dark-mode .progress-bar {
+            background: var(--dark-border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .stat-card {
+            background: var(--dark-card);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--light-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        body.dark-mode .stat-label {
+            color: var(--dark-text-secondary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--light-text-secondary);
+        }
+
+        body.dark-mode .empty-state {
+            color: var(--dark-text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.75rem;
+            }
+
+            .header-title {
+                font-size: 1.25rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+            }
+
+            .habit-card {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            background: var(--light-border);
+            color: var(--light-text);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .habit-card {
+            animation: slideIn 0.3s ease;
+        }
+
+        /* Drag Handle */
+        .drag-handle {
+            cursor: grab;
+            color: var(--light-text-secondary);
+            font-size: 1.2rem;
+        }
+
+        body.dark-mode .drag-handle {
+            color: var(--dark-text-secondary);
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+            z-index: 2000;
+            max-width: 300px;
+        }
+
+        @media (max-width: 768px) {
+            .toast {
+                bottom: 1rem;
+                right: 1rem;
+                left: 1rem;
+                max-width: none;
+            }
+        }
+
+        /* Checkbox Styling */
+        input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        /* Loading State */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--light-border);
+            margin: 1.5rem 0;
+        }
+
+        body.dark-mode .divider {
+            background: var(--dark-border);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content container">
+            <h1 class="header-title">✓ تتبع العادات</h1>
+            <div class="header-controls">
+                <button class="btn-icon theme-toggle" id="themeToggle" title="تبديل الوضع الليلي">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">لوحة التحكم</button>
+            <button class="nav-tab" data-tab="habits">العادات</button>
+            <button class="nav-tab" data-tab="departments">الأقسام</button>
+        </div>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;">إحصائيات هذا الأسبوع</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalHabits">0</div>
+                    <div class="stat-label">إجمالي العادات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="weeklyCompletion">0%</div>
+                    <div class="stat-label">نسبة الإنجاز الأسبوعية</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completedToday">0</div>
+                    <div class="stat-label">المكتملة اليوم</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDepartments">0</div>
+                    <div class="stat-label">الأقسام</div>
+                </div>
+            </div>
+
+            <div id="dashboardContent"></div>
+        </section>
+
+        <!-- Habits Section -->
+        <section id="habits" class="section">
+            <div class="card-header" style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.5rem;">إدارة العادات</h2>
+                <button class="btn btn-primary" id="addHabitBtn">+ إضافة عادة</button>
+            </div>
+
+            <div id="habitsContent"></div>
+        </section>
+
+        <!-- Departments Section -->
+        <section id="departments" class="section">
+            <div class="card-header" style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.5rem;">إدارة الأقسام</h2>
+                <button class="btn btn-primary" id="addDepartmentBtn">+ إضافة قسم</button>
+            </div>
+
+            <div id="departmentsContent"></div>
+        </section>
+    </main>
+
+    <!-- Add/Edit Department Modal -->
+    <div class="modal" id="departmentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="departmentModalTitle">إضافة قسم جديد</h3>
+                <button class="btn-icon" onclick="closeDepartmentModal()" style="background: transparent; color: var(--light-text);">✕</button>
+            </div>
+            <form id="departmentForm">
+                <div class="form-group">
+                    <label for="departmentName">اسم القسم</label>
+                    <input type="text" id="departmentName" required placeholder="مثال: الصحة، العمل، التعليم">
+                </div>
+                <div class="form-group">
+                    <label for="departmentColor">اللون</label>
+                    <input type="color" id="departmentColor" value="#3b82f6">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeDepartmentModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Habit Modal -->
+    <div class="modal" id="habitModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="habitModalTitle">إضافة عادة جديدة</h3>
+                <button class="btn-icon" onclick="closeHabitModal()" style="background: transparent; color: var(--light-text);">✕</button>
+            </div>
+            <form id="habitForm">
+                <div class="form-group">
+                    <label for="habitName">اسم العادة</label>
+                    <input type="text" id="habitName" required placeholder="مثال: شرب الماء، الرياضة">
+                </div>
+                <div class="form-group">
+                    <label for="habitDepartment">القسم</label>
+                    <select id="habitDepartment" required>
+                        <option value="">اختر قسماً</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="habitDescription">الوصف (اختياري)</label>
+                    <textarea id="habitDescription" placeholder="أضف وصفاً للعادة" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeHabitModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        const state = {
+            departments: [],
+            habits: [],
+            weeklyProgress: {},
+            currentDepartmentId: null,
+            editingHabitId: null,
+            editingDepartmentId: null,
+            darkMode: false
+        };
+
+        const STORAGE_KEYS = {
+            DEPARTMENTS: 'habit_tracker_departments',
+            HABITS: 'habit_tracker_habits',
+            WEEKLY_PROGRESS: 'habit_tracker_weekly_progress',
+            DARK_MODE: 'habit_tracker_dark_mode'
+        };
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        function init() {
+            loadFromStorage();
+            setupEventListeners();
+            initTheme();
+            initServiceWorker();
+            render();
+        }
+
+        function initTheme() {
+            state.darkMode = localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true';
+            if (state.darkMode) {
+                document.body.classList.add('dark-mode');
+                updateThemeIcon();
+            }
+        }
+
+        function initServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            }
+        }
+
+        // ============================================
+        // STORAGE MANAGEMENT
+        // ============================================
+        function loadFromStorage() {
+            const departments = localStorage.getItem(STORAGE_KEYS.DEPARTMENTS);
+            const habits = localStorage.getItem(STORAGE_KEYS.HABITS);
+            const weeklyProgress = localStorage.getItem(STORAGE_KEYS.WEEKLY_PROGRESS);
+
+            if (departments) state.departments = JSON.parse(departments);
+            if (habits) state.habits = JSON.parse(habits);
+            if (weeklyProgress) state.weeklyProgress = JSON.parse(weeklyProgress);
+
+            // Initialize weekly progress for all habits
+            state.habits.forEach(habit => {
+                if (!state.weeklyProgress[habit.id]) {
+                    state.weeklyProgress[habit.id] = {
+                        sun: false, mon: false, tue: false, wed: false,
+                        thu: false, fri: false, sat: false
+                    };
+                }
+            });
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEYS.DEPARTMENTS, JSON.stringify(state.departments));
+            localStorage.setItem(STORAGE_KEYS.HABITS, JSON.stringify(state.habits));
+            localStorage.setItem(STORAGE_KEYS.WEEKLY_PROGRESS, JSON.stringify(state.weeklyProgress));
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        function setupEventListeners() {
+            // Tab Navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const tabName = e.target.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+
+            // Theme Toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+            // Department Modal
+            document.getElementById('addDepartmentBtn').addEventListener('click', openDepartmentModal);
+            document.getElementById('departmentForm').addEventListener('submit', saveDepartment);
+
+            // Habit Modal
+            document.getElementById('addHabitBtn').addEventListener('click', openHabitModal);
+            document.getElementById('habitForm').addEventListener('submit', saveHabit);
+
+            // Close modals on background click
+            document.getElementById('departmentModal').addEventListener('click', (e) => {
+                if (e.target.id === 'departmentModal') closeDepartmentModal();
+            });
+            document.getElementById('habitModal').addEventListener('click', (e) => {
+                if (e.target.id === 'habitModal') closeHabitModal();
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeDepartmentModal();
+                    closeHabitModal();
+                }
+            });
+        }
+
+        // ============================================
+        // THEME MANAGEMENT
+        // ============================================
+        function toggleTheme() {
+            state.darkMode = !state.darkMode;
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem(STORAGE_KEYS.DARK_MODE, state.darkMode);
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const icon = document.getElementById('themeIcon');
+            icon.textContent = state.darkMode ? '☀️' : '🌙';
+        }
+
+        // ============================================
+        // TAB MANAGEMENT
+        // ============================================
+        function switchTab(tabName) {
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update active section
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+
+            // Render content
+            if (tabName === 'dashboard') renderDashboard();
+            else if (tabName === 'habits') renderHabits();
+            else if (tabName === 'departments') renderDepartments();
+        }
+
+        // ============================================
+        // DEPARTMENT MANAGEMENT
+        // ============================================
+        function openDepartmentModal(editId = null) {
+            state.editingDepartmentId = editId;
+            const modal = document.getElementById('departmentModal');
+            const form = document.getElementById('departmentForm');
+            const title = document.getElementById('departmentModalTitle');
+
+            form.reset();
+
+            if (editId) {
+                const dept = state.departments.find(d => d.id === editId);
+                if (dept) {
+                    title.textContent = 'تعديل القسم';
+                    document.getElementById('departmentName').value = dept.name;
+                    document.getElementById('departmentColor').value = dept.color;
+                }
+            } else {
+                title.textContent = 'إضافة قسم جديد';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeDepartmentModal() {
+            document.getElementById('departmentModal').classList.remove('active');
+            state.editingDepartmentId = null;
+        }
+
+        function saveDepartment(e) {
+            e.preventDefault();
+            const name = document.getElementById('departmentName').value;
+            const color = document.getElementById('departmentColor').value;
+
+            if (state.editingDepartmentId) {
+                const dept = state.departments.find(d => d.id === state.editingDepartmentId);
+                if (dept) {
+                    dept.name = name;
+                    dept.color = color;
+                }
+            } else {
+                state.departments.push({
+                    id: Date.now().toString(),
+                    name,
+                    color,
+                    createdAt: new Date().toISOString()
+                });
+            }
+
+            saveToStorage();
+            closeDepartmentModal();
+            render();
+            showToast('تم حفظ القسم بنجاح');
+        }
+
+        function deleteDepartment(id) {
+            if (confirm('هل أنت متأكد من حذف هذا القسم؟')) {
+                state.departments = state.departments.filter(d => d.id !== id);
+                state.habits = state.habits.filter(h => h.departmentId !== id);
+                saveToStorage();
+                render();
+                showToast('تم حذف القسم بنجاح');
+            }
+        }
+
+        // ============================================
+        // HABIT MANAGEMENT
+        // ============================================
+        function openHabitModal(editId = null) {
+            state.editingHabitId = editId;
+            const modal = document.getElementById('habitModal');
+            const form = document.getElementById('habitForm');
+            const title = document.getElementById('habitModalTitle');
+            const deptSelect = document.getElementById('habitDepartment');
+
+            // Update department options
+            deptSelect.innerHTML = '<option value="">اختر قسماً</option>';
+            state.departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept.id;
+                option.textContent = dept.name;
+                deptSelect.appendChild(option);
+            });
+
+            form.reset();
+
+            if (editId) {
+                const habit = state.habits.find(h => h.id === editId);
+                if (habit) {
+                    title.textContent = 'تعديل العادة';
+                    document.getElementById('habitName').value = habit.name;
+                    document.getElementById('habitDepartment').value = habit.departmentId;
+                    document.getElementById('habitDescription').value = habit.description || '';
+                }
+            } else {
+                title.textContent = 'إضافة عادة جديدة';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeHabitModal() {
+            document.getElementById('habitModal').classList.remove('active');
+            state.editingHabitId = null;
+        }
+
+        function saveHabit(e) {
+            e.preventDefault();
+            const name = document.getElementById('habitName').value;
+            const departmentId = document.getElementById('habitDepartment').value;
+            const description = document.getElementById('habitDescription').value;
+
+            if (!departmentId) {
+                alert('يرجى اختيار قسم');
+                return;
+            }
+
+            if (state.editingHabitId) {
+                const habit = state.habits.find(h => h.id === state.editingHabitId);
+                if (habit) {
+                    habit.name = name;
+                    habit.departmentId = departmentId;
+                    habit.description = description;
+                }
+            } else {
+                const habitId = Date.now().toString();
+                state.habits.push({
+                    id: habitId,
+                    name,
+                    departmentId,
+                    description,
+                    order: state.habits.length,
+                    createdAt: new Date().toISOString()
+                });
+                state.weeklyProgress[habitId] = {
+                    sun: false, mon: false, tue: false, wed: false,
+                    thu: false, fri: false, sat: false
+                };
+            }
+
+            saveToStorage();
+            closeHabitModal();
+            render();
+            showToast('تم حفظ العادة بنجاح');
+        }
+
+        function deleteHabit(id) {
+            if (confirm('هل أنت متأكد من حذف هذه العادة؟')) {
+                state.habits = state.habits.filter(h => h.id !== id);
+                delete state.weeklyProgress[id];
+                saveToStorage();
+                render();
+                showToast('تم حذف العادة بنجاح');
+            }
+        }
+
+        function reorderHabits(direction, habitId) {
+            const index = state.habits.findIndex(h => h.id === habitId);
+            if (direction === 'up' && index > 0) {
+                [state.habits[index], state.habits[index - 1]] = [state.habits[index - 1], state.habits[index]];
+            } else if (direction === 'down' && index < state.habits.length - 1) {
+                [state.habits[index], state.habits[index + 1]] = [state.habits[index + 1], state.habits[index]];
+            }
+            saveToStorage();
+            render();
+        }
+
+        // ============================================
+        // PROGRESS TRACKING
+        // ============================================
+        function toggleDay(habitId, day) {
+            if (!state.weeklyProgress[habitId]) {
+                state.weeklyProgress[habitId] = {
+                    sun: false, mon: false, tue: false, wed: false,
+                    thu: false, fri: false, sat: false
+                };
+            }
+            state.weeklyProgress[habitId][day] = !state.weeklyProgress[habitId][day];
+            saveToStorage();
+            render();
+        }
+
+        function getWeeklyStats(habitId) {
+            const progress = state.weeklyProgress[habitId] || {};
+            const completed = Object.values(progress).filter(v => v).length;
+            const total = 7;
+            return {
+                completed,
+                total,
+                percentage: Math.round((completed / total) * 100)
+            };
+        }
+
+        function getOverallStats() {
+            let totalCompleted = 0;
+            let totalDays = 0;
+
+            Object.values(state.weeklyProgress).forEach(progress => {
+                const completed = Object.values(progress).filter(v => v).length;
+                totalCompleted += completed;
+                totalDays += 7;
+            });
+
+            return {
+                completed: totalCompleted,
+                total: totalDays,
+                percentage: totalDays > 0 ? Math.round((totalCompleted / totalDays) * 100) : 0
+            };
+        }
+
+        function getCompletedToday() {
+            const today = new Date();
+            const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+            const todayKey = dayNames[today.getDay()];
+
+            let count = 0;
+            Object.values(state.weeklyProgress).forEach(progress => {
+                if (progress[todayKey]) count++;
+            });
+            return count;
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+        function render() {
+            updateStats();
+            if (document.getElementById('dashboard').classList.contains('active')) {
+                renderDashboard();
+            } else if (document.getElementById('habits').classList.contains('active')) {
+                renderHabits();
+            } else if (document.getElementById('departments').classList.contains('active')) {
+                renderDepartments();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('totalHabits').textContent = state.habits.length;
+            document.getElementById('totalDepartments').textContent = state.departments.length;
+            
+            const overallStats = getOverallStats();
+            document.getElementById('weeklyCompletion').textContent = overallStats.percentage + '%';
+            document.getElementById('completedToday').textContent = getCompletedToday();
+        }
+
+        function renderDashboard() {
+            const content = document.getElementById('dashboardContent');
+            
+            if (state.habits.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>لا توجد عادات بعد. ابدأ بإضافة عادة جديدة!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+            state.habits.forEach(habit => {
+                const dept = state.departments.find(d => d.id === habit.departmentId);
+                const stats = getWeeklyStats(habit.id);
+                const progress = state.weeklyProgress[habit.id] || {};
+
+                html += `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">${habit.name}</h3>
+                                <div class="habit-department" style="background-color: ${dept?.color || '#3b82f6'}20; color: ${dept?.color || '#3b82f6'};">
+                                    ${dept?.name || 'بدون قسم'}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">${stats.percentage}%</div>
+                                <div style="font-size: 0.85rem; color: var(--light-text-secondary);">${stats.completed}/${stats.total}</div>
+                            </div>
+                        </div>
+
+                        <div class="progress-section">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${stats.percentage}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="weekly-tracker">
+                            ${dayKeys.map((day, idx) => `
+                                <div class="day-column">
+                                    <div class="day-label">${dayNames[idx]}</div>
+                                    <button class="day-checkbox ${progress[day] ? 'checked' : ''}" 
+                                            onclick="toggleDay('${habit.id}', '${day}')">
+                                        ${progress[day] ? '✓' : ''}
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
+        }
+
+        function renderHabits() {
+            const content = document.getElementById('habitsContent');
+            
+            if (state.habits.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎯</div>
+                        <p>لا توجد عادات بعد. أضف عادة جديدة لتبدأ!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="habits-container">';
+            
+            state.habits.forEach((habit, idx) => {
+                const dept = state.departments.find(d => d.id === habit.departmentId);
+                const stats = getWeeklyStats(habit.id);
+
+                html += `
+                    <div class="habit-card">
+                        <div class="habit-header">
+                            <div style="flex: 1;">
+                                <h3 class="habit-title">${habit.name}</h3>
+                                <div class="habit-department" style="background-color: ${dept?.color || '#3b82f6'}20; color: ${dept?.color || '#3b82f6'};">
+                                    ${dept?.name || 'بدون قسم'}
+                                </div>
+                                ${habit.description ? `<p style="font-size: 0.9rem; color: var(--light-text-secondary); margin-top: 0.5rem;">${habit.description}</p>` : ''}
+                            </div>
+                            <div class="habit-actions">
+                                <button class="btn btn-small btn-secondary" onclick="openHabitModal('${habit.id}')">✏️ تعديل</button>
+                                <button class="btn btn-small btn-danger" onclick="deleteHabit('${habit.id}')">🗑️ حذف</button>
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <div class="progress-label">
+                                <span>التقدم الأسبوعي</span>
+                                <span>${stats.percentage}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${stats.percentage}%"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; justify-content: space-between; font-size: 0.85rem;">
+                            <button class="btn btn-small" onclick="reorderHabits('up', '${habit.id}')" ${idx === 0 ? 'disabled' : ''}>⬆️ أعلى</button>
+                            <button class="btn btn-small" onclick="reorderHabits('down', '${habit.id}')" ${idx === state.habits.length - 1 ? 'disabled' : ''}>⬇️ أسفل</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+        }
+
+        function renderDepartments() {
+            const content = document.getElementById('departmentsContent');
+            
+            if (state.departments.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📂</div>
+                        <p>لا توجد أقسام بعد. أضف قسماً جديداً!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="departments-grid">';
+            
+            state.departments.forEach(dept => {
+                const habitCount = state.habits.filter(h => h.departmentId === dept.id).length;
+
+                html += `
+                    <div class="department-card" style="border-top-color: ${dept.color};">
+                        <h3 class="department-name">${dept.name}</h3>
+                        <p class="department-count">${habitCount} عادة</p>
+                        <div class="department-actions">
+                            <button class="btn btn-small btn-secondary" onclick="openDepartmentModal('${dept.id}')">✏️ تعديل</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteDepartment('${dept.id}')">🗑️ حذف</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+        }
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ============================================
+        // START APPLICATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
